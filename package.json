@@ -1,0 +1,26 @@
+{
+  "name": "royal-rajasthan-spices",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:push": "supabase db push",
+    "db:reset": "bash scripts/reset-dev-db.sh",
+    "db:types": "bash scripts/generate-types.sh",
+    "search:setup": "tsx scripts/setup-meilisearch.ts",
+    "test:e2e": "pnpm --filter @rrs/customer-web exec playwright test"
+  },
+  "devDependencies": {
+    "turbo": "^2.9.16",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  },
+  "packageManager": "pnpm@11.5.1",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+html { font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+body { background: #F8F9FB; color: #111827; }
+
+.font-display { font-family: var(--font-display); }
+.font-mono { font-family: var(--font-mono); }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F1F5F9; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+@layer components {
+  .btn-primary { @apply bg-royal-gold-500 hover:bg-royal-gold-600 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors; }
+  .btn-secondary { @apply border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-lg text-sm transition-colors; }
+  .btn-danger { @apply bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors; }
+  .input-admin { @apply w-full px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-royal-gold-400 focus:border-transparent transition-all; }
+  .card-admin { @apply bg-white rounded-xl border border-gray-100 shadow-sm; }
+  .badge-status-pending { @apply px-2.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full; }
+  .badge-status-confirmed { @apply px-2.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full; }
+  .badge-status-shipped { @apply px-2.5 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full; }
+  .badge-status-delivered { @apply px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full; }
+  .badge-status-cancelled { @apply px-2.5 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full; }
+}

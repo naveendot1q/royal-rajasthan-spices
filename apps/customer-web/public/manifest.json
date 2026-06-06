@@ -1,0 +1,20 @@
+{
+  "name": "Royal Rajasthan Spice Market",
+  "short_name": "RR Spices",
+  "description": "Authentic spices from the royal heritage of Rajasthan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDF6E3",
+  "theme_color": "#B8860B",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["shopping", "food"],
+  "shortcuts": [
+    { "name": "Shop Spices", "url": "/products", "description": "Browse all spices" },
+    { "name": "My Orders", "url": "/account/orders", "description": "Track your orders" },
+    { "name": "Search", "url": "/search", "description": "Search for spices" }
+  ]
+}

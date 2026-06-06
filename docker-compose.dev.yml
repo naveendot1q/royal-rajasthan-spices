@@ -1,0 +1,87 @@
+version: "3.8"
+
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.10
+    container_name: rrs_meilisearch
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_MASTER_KEY: "masterKey_dev_royal_rajasthan"
+      MEILI_ENV: "development"
+    volumes:
+      - meilisearch_data:/meili_data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: rrs_umami
+    ports:
+      - "3010:3000"
+    environment:
+      DATABASE_URL: "postgresql://umami:umami_password@umami_db:5432/umami"
+      APP_SECRET: "umami_secret_royal_rajasthan_2024"
+      DISABLE_TELEMETRY: "1"
+    depends_on:
+      umami_db:
+        condition: service_healthy
+
+  umami_db:
+    image: postgres:16-alpine
+    container_name: rrs_umami_db
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: umami_password
+    volumes:
+      - umami_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  glitchtip:
+    image: glitchtip/glitchtip:latest
+    container_name: rrs_glitchtip
+    ports:
+      - "3011:8080"
+    environment:
+      DATABASE_URL: "postgresql://glitchtip:glitchtip_password@glitchtip_db:5432/glitchtip"
+      SECRET_KEY: "glitchtip_secret_royal_rajasthan_2024_very_long_secret"
+      EMAIL_URL: "consolemail://"
+      GLITCHTIP_DOMAIN: "http://localhost:3011"
+    depends_on:
+      glitchtip_db:
+        condition: service_healthy
+
+  glitchtip_db:
+    image: postgres:16-alpine
+    container_name: rrs_glitchtip_db
+    environment:
+      POSTGRES_DB: glitchtip
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: glitchtip_password
+    volumes:
+      - glitchtip_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glitchtip"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: rrs_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+volumes:
+  meilisearch_data:
+  umami_data:
+  glitchtip_data:

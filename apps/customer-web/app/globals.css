@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Rajasthan palette */
+  --royal-gold: #B8860B;
+  --royal-gold-light: #DAA520;
+  --maroon: #6B1A1A;
+  --maroon-deep: #4A0E0E;
+  --desert-sand: #F5E6C8;
+  --palace-ivory: #FDF6E3;
+  --jodhpur-blue: #1A3A5C;
+  --jodhpur-light: #2E6B9E;
+  --emerald: #1A6B4A;
+  --saffron: #E8820C;
+
+  /* Shadows */
+  --shadow-gold: 0 4px 24px rgba(184, 134, 11, 0.25);
+  --shadow-gold-lg: 0 8px 48px rgba(184, 134, 11, 0.35);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--font-body);
+}
+
+body {
+  background-color: var(--palace-ivory);
+  color: #1A0A00;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography */
+.font-display { font-family: var(--font-display); }
+
+/* Rajasthan ornamental divider */
+.ornament::before,
+.ornament::after {
+  content: '';
+  display: inline-block;
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--royal-gold));
+  vertical-align: middle;
+  margin: 0 12px;
+}
+.ornament::after {
+  background: linear-gradient(to left, transparent, var(--royal-gold));
+}
+
+/* Gold shimmer effect */
+.gold-shimmer {
+  background: linear-gradient(
+    120deg,
+    var(--royal-gold) 0%,
+    var(--royal-gold-light) 40%,
+    #F0C040 50%,
+    var(--royal-gold-light) 60%,
+    var(--royal-gold) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+
+/* Rajasthan pattern overlay */
+.pattern-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23B8860B' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--desert-sand); }
+::-webkit-scrollbar-thumb { background: var(--royal-gold); border-radius: 3px; }
+
+/* Search highlight */
+mark.search-highlight {
+  background: rgba(184, 134, 11, 0.2);
+  color: inherit;
+  font-weight: 600;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #F5E6C8 25%, #FDF6E3 50%, #F5E6C8 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-royal-gold-500 hover:bg-royal-gold-600 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-gold hover:shadow-gold-lg active:scale-95;
+  }
+  .btn-secondary {
+    @apply border-2 border-royal-gold-500 text-royal-gold-500 hover:bg-royal-gold-50 font-medium px-6 py-3 rounded-lg transition-all duration-200;
+  }
+  .btn-maroon {
+    @apply bg-maroon-500 hover:bg-maroon-600 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200;
+  }
+  .card-royal {
+    @apply bg-white rounded-xl border border-royal-gold-100 shadow-sm hover:shadow-gold transition-all duration-300;
+  }
+  .input-royal {
+    @apply w-full px-4 py-3 border border-royal-gold-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-royal-gold-400 focus:border-transparent transition-all;
+  }
+  .badge-gold {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-royal-gold-100 text-royal-gold-700;
+  }
+  .section-title {
+    @apply font-display text-3xl md:text-4xl font-semibold text-maroon-500 text-center;
+  }
+}
