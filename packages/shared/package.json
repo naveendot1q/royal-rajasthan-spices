@@ -3,18 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "main": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" }
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }
-
-EOF
-# Fix package.json properly
-node -e "
-const fs = require('fs');
-const pkg = JSON.parse(fs.readFileSync('packages/shared/package.json', 'utf8'));
-pkg.scripts = { ...pkg.scripts, test: 'vitest run', 'test:watch': 'vitest', 'test:coverage': 'vitest run --coverage' };
-pkg.devDependencies = { ...pkg.devDependencies, vitest: '^2.0.0', '@vitest/coverage-v8': '^2.0.0' };
-fs.writeFileSync('packages/shared/package.json', JSON.stringify(pkg, null, 2));
-console.log('Updated packages/shared/package.json');
-"
-
-echo "tests setup done ✓"
