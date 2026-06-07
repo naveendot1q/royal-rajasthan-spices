@@ -37,7 +37,7 @@
     "sonner": "^1.5.0",
     "stripe": "^22.2.0",
     "tailwind-merge": "^2.5.2",
-    "zod": "^3.23.8"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@rrs/config": "workspace:*",
