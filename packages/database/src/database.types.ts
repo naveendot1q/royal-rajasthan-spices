@@ -25,6 +25,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+        Relationships: []
       }
       roles: {
         Row: {
@@ -36,6 +37,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['roles']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['roles']['Insert']>
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -46,6 +48,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['user_roles']['Row'], 'assigned_at'>
         Update: Partial<Database['public']['Tables']['user_roles']['Insert']>
+        Relationships: [
+          { foreignKeyName: "user_roles_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "user_roles_role_id_fkey"; columns: ["role_id"]; referencedRelation: "roles"; referencedColumns: ["id"] }
+        ]
       }
       addresses: {
         Row: {
@@ -68,6 +74,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['addresses']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['addresses']['Insert']>
+        Relationships: [
+          { foreignKeyName: "addresses_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] }
+        ]
       }
       product_categories: {
         Row: {
@@ -85,6 +94,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['product_categories']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['product_categories']['Insert']>
+        Relationships: [
+          { foreignKeyName: "product_categories_parent_id_fkey"; columns: ["parent_id"]; referencedRelation: "product_categories"; referencedColumns: ["id"] }
+        ]
       }
       products: {
         Row: {
@@ -114,6 +126,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['products']['Row'], 'id' | 'created_at' | 'updated_at' | 'sales_count' | 'avg_rating' | 'review_count' | 'search_vector'>
         Update: Partial<Database['public']['Tables']['products']['Insert']>
+        Relationships: [
+          { foreignKeyName: "products_category_id_fkey"; columns: ["category_id"]; referencedRelation: "product_categories"; referencedColumns: ["id"] }
+        ]
       }
       product_images: {
         Row: {
@@ -127,6 +142,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['product_images']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['product_images']['Insert']>
+        Relationships: [
+          { foreignKeyName: "product_images_product_id_fkey"; columns: ["product_id"]; referencedRelation: "products"; referencedColumns: ["id"] }
+        ]
       }
       product_variants: {
         Row: {
@@ -142,6 +160,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['product_variants']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['product_variants']['Insert']>
+        Relationships: [
+          { foreignKeyName: "product_variants_product_id_fkey"; columns: ["product_id"]; referencedRelation: "products"; referencedColumns: ["id"] }
+        ]
       }
       inventory: {
         Row: {
@@ -155,6 +176,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['inventory']['Row'], 'id' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['inventory']['Insert']>
+        Relationships: [
+          { foreignKeyName: "inventory_variant_id_fkey"; columns: ["variant_id"]; referencedRelation: "product_variants"; referencedColumns: ["id"] }
+        ]
       }
       inventory_logs: {
         Row: {
@@ -168,6 +192,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['inventory_logs']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['inventory_logs']['Insert']>
+        Relationships: [
+          { foreignKeyName: "inventory_logs_variant_id_fkey"; columns: ["variant_id"]; referencedRelation: "product_variants"; referencedColumns: ["id"] }
+        ]
       }
       coupons: {
         Row: {
@@ -187,6 +214,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['coupons']['Row'], 'id' | 'created_at' | 'used_count'>
         Update: Partial<Database['public']['Tables']['coupons']['Insert']>
+        Relationships: []
       }
       carts: {
         Row: {
@@ -199,6 +227,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['carts']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['carts']['Insert']>
+        Relationships: [
+          { foreignKeyName: "carts_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] }
+        ]
       }
       cart_items: {
         Row: {
@@ -212,6 +243,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['cart_items']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['cart_items']['Insert']>
+        Relationships: [
+          { foreignKeyName: "cart_items_cart_id_fkey"; columns: ["cart_id"]; referencedRelation: "carts"; referencedColumns: ["id"] },
+          { foreignKeyName: "cart_items_variant_id_fkey"; columns: ["variant_id"]; referencedRelation: "product_variants"; referencedColumns: ["id"] }
+        ]
       }
       orders: {
         Row: {
@@ -235,6 +270,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['orders']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['orders']['Insert']>
+        Relationships: [
+          { foreignKeyName: "orders_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "orders_coupon_id_fkey"; columns: ["coupon_id"]; referencedRelation: "coupons"; referencedColumns: ["id"] }
+        ]
       }
       order_items: {
         Row: {
@@ -250,6 +289,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['order_items']['Row'], 'id'>
         Update: Partial<Database['public']['Tables']['order_items']['Insert']>
+        Relationships: [
+          { foreignKeyName: "order_items_order_id_fkey"; columns: ["order_id"]; referencedRelation: "orders"; referencedColumns: ["id"] },
+          { foreignKeyName: "order_items_variant_id_fkey"; columns: ["variant_id"]; referencedRelation: "product_variants"; referencedColumns: ["id"] }
+        ]
       }
       payments: {
         Row: {
@@ -267,6 +310,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['payments']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['payments']['Insert']>
+        Relationships: [
+          { foreignKeyName: "payments_order_id_fkey"; columns: ["order_id"]; referencedRelation: "orders"; referencedColumns: ["id"] }
+        ]
       }
       refunds: {
         Row: {
@@ -282,6 +328,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['refunds']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['refunds']['Insert']>
+        Relationships: [
+          { foreignKeyName: "refunds_payment_id_fkey"; columns: ["payment_id"]; referencedRelation: "payments"; referencedColumns: ["id"] }
+        ]
       }
       tracking_updates: {
         Row: {
@@ -295,6 +344,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['tracking_updates']['Row'], 'id'>
         Update: Partial<Database['public']['Tables']['tracking_updates']['Insert']>
+        Relationships: [
+          { foreignKeyName: "tracking_updates_order_id_fkey"; columns: ["order_id"]; referencedRelation: "orders"; referencedColumns: ["id"] }
+        ]
       }
       reviews: {
         Row: {
@@ -315,6 +367,11 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['reviews']['Row'], 'id' | 'created_at' | 'helpful_count'>
         Update: Partial<Database['public']['Tables']['reviews']['Insert']>
+        Relationships: [
+          { foreignKeyName: "reviews_product_id_fkey"; columns: ["product_id"]; referencedRelation: "products"; referencedColumns: ["id"] },
+          { foreignKeyName: "reviews_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "reviews_order_id_fkey"; columns: ["order_id"]; referencedRelation: "orders"; referencedColumns: ["id"] }
+        ]
       }
       wishlists: {
         Row: {
@@ -326,6 +383,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['wishlists']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['wishlists']['Insert']>
+        Relationships: [
+          { foreignKeyName: "wishlists_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "wishlists_variant_id_fkey"; columns: ["variant_id"]; referencedRelation: "product_variants"; referencedColumns: ["id"] }
+        ]
       }
       support_tickets: {
         Row: {
@@ -343,6 +404,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['support_tickets']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['support_tickets']['Insert']>
+        Relationships: [
+          { foreignKeyName: "support_tickets_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "support_tickets_order_id_fkey"; columns: ["order_id"]; referencedRelation: "orders"; referencedColumns: ["id"] }
+        ]
       }
       support_messages: {
         Row: {
@@ -356,6 +421,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['support_messages']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['support_messages']['Insert']>
+        Relationships: [
+          { foreignKeyName: "support_messages_ticket_id_fkey"; columns: ["ticket_id"]; referencedRelation: "support_tickets"; referencedColumns: ["id"] },
+          { foreignKeyName: "support_messages_sender_id_fkey"; columns: ["sender_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] }
+        ]
       }
       notifications: {
         Row: {
@@ -371,6 +440,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['notifications']['Insert']>
+        Relationships: [
+          { foreignKeyName: "notifications_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] }
+        ]
       }
       audit_logs: {
         Row: {
@@ -387,6 +459,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['audit_logs']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['audit_logs']['Insert']>
+        Relationships: []
       }
       banners: {
         Row: {
@@ -406,6 +479,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['banners']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['banners']['Insert']>
+        Relationships: []
       }
       cms_pages: {
         Row: {
@@ -420,6 +494,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['cms_pages']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['cms_pages']['Insert']>
+        Relationships: []
       }
       blogs: {
         Row: {
@@ -438,6 +513,9 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['blogs']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['blogs']['Insert']>
+        Relationships: [
+          { foreignKeyName: "blogs_author_id_fkey"; columns: ["author_id"]; referencedRelation: "profiles"; referencedColumns: ["id"] }
+        ]
       }
       system_settings: {
         Row: {
@@ -450,6 +528,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['system_settings']['Row'], 'id' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['system_settings']['Insert']>
+        Relationships: []
       }
       shipping_methods: {
         Row: {
@@ -465,6 +544,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['shipping_methods']['Row'], 'id'>
         Update: Partial<Database['public']['Tables']['shipping_methods']['Insert']>
+        Relationships: []
       }
     }
     Views: {}
