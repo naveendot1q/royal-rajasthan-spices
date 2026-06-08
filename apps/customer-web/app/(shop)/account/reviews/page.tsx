@@ -7,12 +7,23 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "My Reviews" };
 
+type ReviewProduct = { id: string; name: string; slug: string; images: { url: string; is_primary: boolean }[] };
+type Review = {
+  id: string;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  status: string;
+  created_at: string;
+  product: ReviewProduct | null;
+};
+
 export default async function ReviewsPage() {
   const user = await getUser();
   if (!user) redirect("/login");
 
   const supabase = await createSupabaseServer();
-  const { data: reviews } = await supabase
+  const { data: rawReviews } = await supabase
     .from("reviews")
     .select(`
       id, rating, title, body, status, created_at,
@@ -20,6 +31,8 @@ export default async function ReviewsPage() {
     `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  const reviews = (rawReviews ?? []) as unknown as Review[];
 
   const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
     pending: { label: "Under Review", cls: "bg-amber-100 text-amber-700" },
@@ -31,7 +44,7 @@ export default async function ReviewsPage() {
     <div>
       <h1 className="font-display text-2xl font-bold text-maroon-700 mb-6">My Reviews</h1>
 
-      {(!reviews || reviews.length === 0) ? (
+      {reviews.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-royal-gold-100">
           <Star size={40} className="mx-auto text-royal-gold-200 mb-4" />
           <h2 className="font-display text-xl text-maroon-600 mb-2">No reviews yet</h2>
@@ -41,7 +54,7 @@ export default async function ReviewsPage() {
       ) : (
         <div className="space-y-4">
           {reviews.map((review) => {
-            const product = review.product as { id: string; name: string; slug: string; images: { url: string; is_primary: boolean }[] } | null;
+            const product = review.product;
             const image = product?.images?.find((i) => i.is_primary)?.url || product?.images?.[0]?.url;
             const statusInfo = STATUS_LABELS[review.status] || STATUS_LABELS.pending;
 
