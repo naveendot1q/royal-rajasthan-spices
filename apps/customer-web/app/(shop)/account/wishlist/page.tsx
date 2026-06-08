@@ -6,6 +6,12 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "My Wishlist" };
 
+type ProductCardItem = {
+  id: string; name: string; slug: string; base_price: number; compare_price: null;
+  avg_rating: number; review_count: number; sales_count: number; is_featured: boolean;
+  primary_image: string | null; has_stock: boolean; default_variant_id: string | undefined;
+};
+
 export default async function WishlistPage() {
   const items = await getWishlist();
 
@@ -20,20 +26,12 @@ export default async function WishlistPage() {
     );
   }
 
-  const products = items.map((item) => {
-    const variant = item.variant as {
-      id: string; name: string; price_modifier: number;
-      product: {
-        id: string; name: string; slug: string;
-        base_price: number; avg_rating: number;
-        images: { url: string; is_primary: boolean }[];
-      } | null;
-    } | null;
-
+  const products = items.reduce<ProductCardItem[]>((acc, item) => {
+    const variant = item.variant;
     const product = variant?.product;
-    if (!product) return null;
+    if (!product) return acc;
 
-    return {
+    acc.push({
       id: product.id,
       name: product.name,
       slug: product.slug,
@@ -46,12 +44,9 @@ export default async function WishlistPage() {
       primary_image: product.images?.find((i) => i.is_primary)?.url || product.images?.[0]?.url || null,
       has_stock: true,
       default_variant_id: variant?.id,
-    };
-  }).filter(Boolean) as NonNullable<ReturnType<typeof items[number]["variant"]> extends null ? never : {
-    id: string; name: string; slug: string; base_price: number; compare_price: null;
-    avg_rating: number; review_count: number; sales_count: number; is_featured: boolean;
-    primary_image: string | null; has_stock: boolean; default_variant_id: string | undefined;
-  }>[];
+    });
+    return acc;
+  }, []);
 
   return (
     <div>
@@ -60,7 +55,7 @@ export default async function WishlistPage() {
         <span className="text-sm text-gray-500">{items.length} item{items.length !== 1 ? "s" : ""}</span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {products.map((p) => p && <ProductCard key={p.id} product={p} isWishlisted />)}
+        {products.map((p) => <ProductCard key={p.id} product={p} isWishlisted />)}
       </div>
     </div>
   );

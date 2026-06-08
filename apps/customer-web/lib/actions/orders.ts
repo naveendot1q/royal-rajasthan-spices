@@ -14,6 +14,10 @@ const createOrderSchema = z.object({
   shippingMethodId: z.string().uuid().optional(),
 });
 
+type CartVariantProduct = { name: string; images?: { url: string; is_primary: boolean }[] };
+type CartVariant = { id: string; name: string; sku: string | null; product: CartVariantProduct | null };
+type CartItemRaw = { id: string; quantity: number; price_snapshot: number; variant: CartVariant | null };
+
 export async function createOrder(formData: FormData) {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -27,7 +31,6 @@ export async function createOrder(formData: FormData) {
   });
   if (!parsed.success) return { error: "Invalid checkout data" };
 
-  // Get cart
   const { data: cart } = await supabase
     .from("carts")
     .select("id")
@@ -35,7 +38,7 @@ export async function createOrder(formData: FormData) {
     .single();
   if (!cart) return { error: "Cart is empty" };
 
-  const { data: cartItems } = await supabase
+  const { data: rawCartItems } = await supabase
     .from("cart_items")
     .select(`
       id, quantity, price_snapshot,
@@ -44,9 +47,9 @@ export async function createOrder(formData: FormData) {
     .eq("cart_id", cart.id)
     .eq("saved_for_later", false);
 
-  if (!cartItems || cartItems.length === 0) return { error: "Cart is empty" };
+  if (!rawCartItems || rawCartItems.length === 0) return { error: "Cart is empty" };
+  const cartItems = rawCartItems as unknown as CartItemRaw[];
 
-  // Get address
   const { data: address } = await supabase
     .from("addresses")
     .select("*")
@@ -55,12 +58,10 @@ export async function createOrder(formData: FormData) {
     .single();
   if (!address) return { error: "Address not found" };
 
-  // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + item.price_snapshot * item.quantity, 0);
   let discountAmount = 0;
   let couponId: string | null = null;
 
-  // Apply coupon
   if (parsed.data.couponCode) {
     const { data: coupon } = await supabase
       .from("coupons")
@@ -99,7 +100,6 @@ export async function createOrder(formData: FormData) {
     country: address.country,
   };
 
-  // Create order
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert({
@@ -121,12 +121,11 @@ export async function createOrder(formData: FormData) {
 
   if (orderError || !order) return { error: "Failed to create order" };
 
-  // Insert order items
   const orderItems = cartItems.map((item) => ({
     order_id: order.id,
     variant_id: item.variant?.id,
-    name_snapshot: `${(item.variant?.product as { name: string })?.name} - ${item.variant?.name}`,
-    image_snapshot: (item.variant?.product as { images?: { url: string; is_primary: boolean }[] })?.images?.find((i) => i.is_primary)?.url || null,
+    name_snapshot: `${item.variant?.product?.name} - ${item.variant?.name}`,
+    image_snapshot: item.variant?.product?.images?.find((i) => i.is_primary)?.url || null,
     sku_snapshot: item.variant?.sku || null,
     price: item.price_snapshot,
     quantity: item.quantity,
@@ -134,7 +133,6 @@ export async function createOrder(formData: FormData) {
 
   await supabase.from("order_items").insert(orderItems);
 
-  // Create payment record
   const paymentProvider = getPaymentProvider();
 
   if (parsed.data.paymentMethod === "cod") {
@@ -147,17 +145,14 @@ export async function createOrder(formData: FormData) {
 
     await supabase.from("orders").update({ status: "confirmed" }).eq("id", order.id);
 
-    // Add tracking update
     await supabase.from("tracking_updates").insert({
       order_id: order.id,
       status: "confirmed",
       description: "Order confirmed. Payment to be collected on delivery.",
     });
 
-    // Clear cart
     await supabase.from("cart_items").delete().eq("cart_id", cart.id);
 
-    // Send emails
     const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("id", user.id).single();
     await sendOrderConfirmationEmail({
       to: user.email!,
@@ -165,7 +160,7 @@ export async function createOrder(formData: FormData) {
       customerName: profile?.full_name || "Valued Customer",
       total,
       items: cartItems.map((i) => ({
-        name: `${(i.variant?.product as { name: string })?.name} - ${i.variant?.name}`,
+        name: `${i.variant?.product?.name} - ${i.variant?.name}`,
         qty: i.quantity,
         price: i.price_snapshot,
       })),
@@ -180,7 +175,6 @@ export async function createOrder(formData: FormData) {
     return { success: true, orderId: order.id, orderNumber };
   }
 
-  // For online payments — create gateway order
   const paymentOrder = await paymentProvider.createOrder(total, order.id);
   await supabase.from("payments").insert({
     order_id: order.id,

@@ -45,11 +45,14 @@ export async function POST(req: NextRequest) {
       });
 
       // Clear cart & send email
-      const { data: order } = await supabase
+      const { data: rawOrder } = await supabase
         .from("orders")
         .select("*, items:order_items(*)")
         .eq("id", paymentRecord.order_id)
         .single();
+
+      type OrderWithItems = typeof rawOrder & { items: { name_snapshot: string; quantity: number; price: number }[] };
+      const order = rawOrder as unknown as OrderWithItems | null;
 
       if (order) {
         // Clear cart

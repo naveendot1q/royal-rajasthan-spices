@@ -33,11 +33,14 @@ export async function POST(req: NextRequest) {
     description: "Payment received. Order confirmed!",
   });
 
-  const { data: order } = await supabase
+  const { data: rawOrder } = await supabase
     .from("orders")
     .select("*, items:order_items(*)")
     .eq("id", orderId)
     .single();
+
+  type OrderWithItems = typeof rawOrder & { items: { name_snapshot: string; quantity: number; price: number }[] };
+  const order = rawOrder as unknown as OrderWithItems | null;
 
   if (order) {
     const { data: { user } } = await supabase.auth.getUser();

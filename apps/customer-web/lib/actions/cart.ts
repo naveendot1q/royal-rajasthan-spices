@@ -11,6 +11,18 @@ const addToCartSchema = z.object({
   quantity: z.number().int().positive().max(50),
 });
 
+type CartVariant = {
+  id: string; name: string; sku: string | null;
+  product: {
+    id: string; name: string; slug: string;
+    images: { url: string; is_primary: boolean }[];
+  } | null;
+};
+export type CartItem = {
+  id: string; quantity: number; price_snapshot: number; saved_for_later: boolean;
+  variant: CartVariant | null;
+};
+
 async function getOrCreateCart(supabase: Awaited<ReturnType<typeof createSupabaseServer>>) {
   const { data: { user } } = await supabase.auth.getUser();
   const cookieStore = await cookies();
@@ -21,7 +33,6 @@ async function getOrCreateCart(supabase: Awaited<ReturnType<typeof createSupabas
   }
 
   if (user) {
-    // Try user cart first
     const { data: cart } = await supabase
       .from("carts")
       .select("id")
@@ -31,7 +42,6 @@ async function getOrCreateCart(supabase: Awaited<ReturnType<typeof createSupabas
 
     if (cart) return cart.id;
 
-    // Merge session cart into user cart if exists
     if (sessionId) {
       const { data: sessionCart } = await supabase
         .from("carts")
@@ -73,7 +83,6 @@ export async function addToCart(formData: FormData) {
   });
   if (!parsed.success) return { error: "Invalid input" };
 
-  // Check inventory
   const { data: inventory } = await supabase
     .from("inventory")
     .select("quantity, reserved_qty")
@@ -83,15 +92,15 @@ export async function addToCart(formData: FormData) {
   const available = (inventory?.quantity ?? 0) - (inventory?.reserved_qty ?? 0);
   if (available < parsed.data.quantity) return { error: "Not enough stock available" };
 
-  // Get price snapshot
-  const { data: variant } = await supabase
+  const { data: rawVariant } = await supabase
     .from("product_variants")
     .select("price_modifier, product:products(base_price)")
     .eq("id", parsed.data.variantId)
     .single();
 
-  if (!variant) return { error: "Product not found" };
-  const priceSnapshot = (variant.product as { base_price: number }).base_price + variant.price_modifier;
+  if (!rawVariant) return { error: "Product not found" };
+  const variant = rawVariant as unknown as { price_modifier: number; product: { base_price: number } | null };
+  const priceSnapshot = (variant.product?.base_price ?? 0) + variant.price_modifier;
 
   const cartId = await getOrCreateCart(supabase);
 
@@ -140,7 +149,7 @@ export async function moveToCart(itemId: string) {
   return { success: true };
 }
 
-export async function getCartItems() {
+export async function getCartItems(): Promise<{ items: CartItem[]; savedItems: CartItem[] }> {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   const cookieStore = await cookies();
@@ -158,7 +167,7 @@ export async function getCartItems() {
   const { data: cart } = await cartQuery.single();
   if (!cart) return { items: [], savedItems: [] };
 
-  const { data: items } = await supabase
+  const { data: rawItems } = await supabase
     .from("cart_items")
     .select(`
       id, quantity, price_snapshot, saved_for_later,
@@ -170,8 +179,10 @@ export async function getCartItems() {
     .eq("cart_id", cart.id)
     .order("created_at");
 
+  const items = (rawItems ?? []) as unknown as CartItem[];
+
   return {
-    items: (items || []).filter((i) => !i.saved_for_later),
-    savedItems: (items || []).filter((i) => i.saved_for_later),
+    items: items.filter((i) => !i.saved_for_later),
+    savedItems: items.filter((i) => i.saved_for_later),
   };
 }
