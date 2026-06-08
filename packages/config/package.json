@@ -2,6 +2,7 @@
   "name": "@rrs/config",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "exports": {
     "./tailwind": "./tailwind.config.ts",
     "./typescript": "./tsconfig.base.json",
