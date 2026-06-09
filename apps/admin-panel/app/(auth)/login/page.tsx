@@ -46,6 +46,8 @@ export default function AdminLoginPage() {
     }
 
     toast.success("Welcome back!");
+    await new Promise(r => setTimeout(r, 500));
+    router.refresh();
     router.push("/");
   };
 
