@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -21,10 +21,8 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Cast to any to work around @supabase/ssr type mismatch in Edge runtime
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const auth = supabase.auth as any;
-  const { data: { session } } = await auth.getSession();
+  const { data: { session } } = await (supabase.auth as any).getSession();
   const user = session?.user ?? null;
 
   const isLoginPage = request.nextUrl.pathname === "/login";
