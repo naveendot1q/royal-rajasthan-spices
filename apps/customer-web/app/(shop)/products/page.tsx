@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductFilters } from "@/components/product/product-filters";
@@ -13,17 +12,19 @@ export const metadata: Metadata = {
 
 interface ProductsPageProps {
   searchParams: Promise<{
-    page?: string;
-    sort?: string;
-    category?: string;
-    min_price?: string;
-    max_price?: string;
-    rating?: string;
-    tag?: string;
-    origin?: string;
-    filter?: string;
+    page?: string; sort?: string; category?: string;
+    min_price?: string; max_price?: string; rating?: string;
+    tag?: string; origin?: string; filter?: string;
   }>;
 }
+
+type RawProduct = {
+  id: string; name: string; slug: string; base_price: number; compare_price: number | null;
+  avg_rating: number; review_count: number; sales_count: number; is_featured: boolean;
+  images: { url: string; is_primary: boolean }[];
+  category: { name: string } | null;
+  variants: { id: string; is_active: boolean }[];
+};
 
 async function getProducts(params: Awaited<ProductsPageProps["searchParams"]>) {
   const supabase = await createSupabaseServer();
@@ -51,28 +52,23 @@ async function getProducts(params: Awaited<ProductsPageProps["searchParams"]>) {
   if (params.rating) query = query.gte("avg_rating", Number(params.rating));
   if (params.filter === "featured") query = query.eq("is_featured", true);
 
-  // Sort
   const sort = params.sort || "sales_count:desc";
   const [sortField, sortDir] = sort.split(":");
   query = query.order(sortField || "sales_count", { ascending: sortDir === "asc" });
 
-  const { data, count } = await query.range(from, from + pageSize - 1);
+  const { data: rawData, count } = await query.range(from, from + pageSize - 1);
+  const data = (rawData ?? []) as unknown as RawProduct[];
 
   return {
-    products: (data || []).map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      base_price: p.base_price,
-      compare_price: p.compare_price,
-      avg_rating: p.avg_rating,
-      review_count: p.review_count,
-      sales_count: p.sales_count,
-      is_featured: p.is_featured,
-      primary_image: (p.images as { url: string; is_primary: boolean }[])?.find((i) => i.is_primary)?.url || null,
-      category_name: (p.category as { name: string } | null)?.name,
-      has_stock: (p.variants as { is_active: boolean }[])?.some((v) => v.is_active),
-      default_variant_id: (p.variants as { id: string; is_active: boolean }[])?.find((v) => v.is_active)?.id,
+    products: data.map((p) => ({
+      id: p.id, name: p.name, slug: p.slug,
+      base_price: p.base_price, compare_price: p.compare_price,
+      avg_rating: p.avg_rating, review_count: p.review_count,
+      sales_count: p.sales_count, is_featured: p.is_featured,
+      primary_image: p.images?.find((i) => i.is_primary)?.url || null,
+      category_name: p.category?.name,
+      has_stock: p.variants?.some((v) => v.is_active),
+      default_variant_id: p.variants?.find((v) => v.is_active)?.id,
     })),
     total: count || 0,
     page,
@@ -101,7 +97,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   return (
     <div className="min-h-screen bg-palace-ivory">
-      {/* Header */}
       <div className="bg-gradient-to-r from-maroon-800 to-maroon-700 text-white py-12 pattern-overlay">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="font-display text-4xl font-bold mb-2">All Spices</h1>
@@ -111,12 +106,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-8">
-          {/* Sidebar Filters */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
             <ProductFilters categories={categories} currentParams={params} />
           </aside>
 
-          {/* Main content */}
           <div className="flex-1 min-w-0">
             <ProductSortBar total={total} currentSort={params.sort} currentParams={params} />
 
@@ -130,7 +123,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               <ProductsGrid products={products} />
             )}
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center gap-2 mt-10">
                 {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((p) => (

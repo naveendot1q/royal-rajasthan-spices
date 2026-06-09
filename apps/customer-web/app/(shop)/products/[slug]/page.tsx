@@ -11,6 +11,20 @@ interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
+type ProductImage = { id: string; url: string; alt_text: string | null; is_primary: boolean; sort_order: number };
+type ProductVariant = {
+  id: string; name: string; sku: string | null; price_modifier: number;
+  weight_grams: number | null; is_active: boolean; sort_order: number;
+  inventory: { quantity: number; reserved_qty: number } | null;
+};
+type ProductCategory = { id: string; name: string; slug: string };
+type RelatedRawProduct = {
+  id: string; name: string; slug: string; base_price: number; compare_price: number | null;
+  avg_rating: number; review_count: number; sales_count: number; is_featured: boolean;
+  images: { url: string; is_primary: boolean }[];
+  variants: { id: string; is_active: boolean }[];
+};
+
 async function getProduct(slug: string) {
   const supabase = await createSupabaseServer();
   const { data } = await supabase
@@ -29,12 +43,17 @@ async function getProduct(slug: string) {
     .is("deleted_at", null)
     .single();
 
-  return data;
+  if (!data) return null;
+  return data as unknown as typeof data & {
+    category: ProductCategory | null;
+    images: ProductImage[];
+    variants: ProductVariant[];
+  };
 }
 
 async function getRelatedProducts(categoryId: string, excludeId: string) {
   const supabase = await createSupabaseServer();
-  const { data } = await supabase
+  const { data: rawData } = await supabase
     .from("products")
     .select(`
       id, name, slug, base_price, compare_price, avg_rating, review_count, sales_count, is_featured,
@@ -47,14 +66,16 @@ async function getRelatedProducts(categoryId: string, excludeId: string) {
     .is("deleted_at", null)
     .limit(8);
 
-  return (data || []).map((p) => ({
+  const data = (rawData ?? []) as unknown as RelatedRawProduct[];
+
+  return data.map((p) => ({
     id: p.id, name: p.name, slug: p.slug,
     base_price: p.base_price, compare_price: p.compare_price,
     avg_rating: p.avg_rating, review_count: p.review_count,
     sales_count: p.sales_count, is_featured: p.is_featured,
-    primary_image: (p.images as { url: string; is_primary: boolean }[])?.find((i) => i.is_primary)?.url || null,
-    has_stock: (p.variants as { is_active: boolean }[])?.some((v) => v.is_active),
-    default_variant_id: (p.variants as { id: string; is_active: boolean }[])?.find((v) => v.is_active)?.id,
+    primary_image: p.images?.find((i) => i.is_primary)?.url || null,
+    has_stock: p.variants?.some((v) => v.is_active),
+    default_variant_id: p.variants?.find((v) => v.is_active)?.id,
   }));
 }
 
@@ -79,7 +100,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const product = await getProduct(slug);
   if (!product) return { title: "Product Not Found" };
 
-  const image = (product.images as { url: string; is_primary: boolean }[])?.find((i) => i.is_primary)?.url;
+  const image = product.images?.find((i) => i.is_primary)?.url;
 
   return {
     title: product.name,
@@ -107,11 +128,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     getReviews(product.id),
   ]);
 
-  const images = (product.images as { id: string; url: string; alt_text: string | null; is_primary: boolean; sort_order: number }[])
-    ?.sort((a, b) => a.sort_order - b.sort_order) || [];
-  const variants = (product.variants as { id: string; name: string; sku: string | null; price_modifier: number; weight_grams: number | null; is_active: boolean; sort_order: number; inventory: { quantity: number; reserved_qty: number } | null }[])
-    ?.filter((v) => v.is_active)
-    ?.sort((a, b) => a.sort_order - b.sort_order) || [];
+  const images = (product.images ?? []).sort((a, b) => a.sort_order - b.sort_order);
+  const variants = (product.variants ?? []).filter((v) => v.is_active).sort((a, b) => a.sort_order - b.sort_order);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -154,8 +172,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <span>/</span>
               <a href="/products" className="hover:text-royal-gold-600">Products</a>
               <span>/</span>
-              <a href={`/categories/${(product.category as { slug: string })?.slug}`} className="hover:text-royal-gold-600">
-                {(product.category as { name: string })?.name}
+              <a href={`/categories/${product.category?.slug}`} className="hover:text-royal-gold-600">
+                {product.category?.name}
               </a>
               <span>/</span>
               <span className="text-gray-800 font-medium truncate">{product.name}</span>
@@ -179,7 +197,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <ProductCarousel
                 title="You May Also Like"
                 products={relatedProducts}
-                viewAllHref={`/categories/${(product.category as { slug: string })?.slug}`}
+                viewAllHref={`/categories/${product.category?.slug}`}
               />
             </div>
           )}

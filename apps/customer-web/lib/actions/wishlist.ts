@@ -2,6 +2,17 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+export type WishlistVariant = {
+  id: string;
+  name: string;
+  price_modifier: number;
+  product: {
+    id: string; name: string; slug: string; base_price: number; avg_rating: number;
+    images: { url: string; is_primary: boolean }[];
+  } | null;
+};
+export type WishlistItem = { id: string; created_at: string; variant: WishlistVariant | null };
+
 export async function toggleWishlist(variantId: string) {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -25,7 +36,7 @@ export async function toggleWishlist(variantId: string) {
   }
 }
 
-export async function getWishlist() {
+export async function getWishlist(): Promise<WishlistItem[]> {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
@@ -42,5 +53,5 @@ export async function getWishlist() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  return data || [];
+  return (data ?? []) as unknown as WishlistItem[];
 }

@@ -8,6 +8,13 @@ interface CategoryPageProps {
   searchParams: Promise<{ page?: string; sort?: string }>;
 }
 
+type RawProduct = {
+  id: string; name: string; slug: string; base_price: number; compare_price: number | null;
+  avg_rating: number; review_count: number; sales_count: number; is_featured: boolean;
+  images: { url: string; is_primary: boolean }[];
+  variants: { id: string; is_active: boolean }[];
+};
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createSupabaseServer();
@@ -40,7 +47,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   if (!category) notFound();
 
   const [sortField, sortDir] = sort.split(":");
-  const { data: products, count } = await supabase
+  const { data: rawProducts, count } = await supabase
     .from("products")
     .select(`
       id, name, slug, base_price, compare_price, avg_rating, review_count,
@@ -54,15 +61,17 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     .order(sortField || "sales_count", { ascending: sortDir === "asc" })
     .range((page - 1) * pageSize, page * pageSize - 1);
 
-  const normalised = (products || []).map((p) => ({
+  const products = (rawProducts ?? []) as unknown as RawProduct[];
+
+  const normalised = products.map((p) => ({
     id: p.id, name: p.name, slug: p.slug,
     base_price: p.base_price, compare_price: p.compare_price,
     avg_rating: p.avg_rating, review_count: p.review_count,
     sales_count: p.sales_count, is_featured: p.is_featured,
-    primary_image: (p.images as { url: string; is_primary: boolean }[])?.find((i) => i.is_primary)?.url || null,
+    primary_image: p.images?.find((i) => i.is_primary)?.url || null,
     category_name: category.name,
-    has_stock: (p.variants as { is_active: boolean }[])?.some((v) => v.is_active),
-    default_variant_id: (p.variants as { id: string; is_active: boolean }[])?.find((v) => v.is_active)?.id,
+    has_stock: p.variants?.some((v) => v.is_active),
+    default_variant_id: p.variants?.find((v) => v.is_active)?.id,
   }));
 
   const totalPages = Math.ceil((count || 0) / pageSize);

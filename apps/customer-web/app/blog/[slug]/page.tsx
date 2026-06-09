@@ -7,6 +7,12 @@ interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
 }
 
+type BlogPost = {
+  title: string; excerpt: string | null; cover_image: string | null; tags: string[];
+  published_at: string | null; body: string | null;
+  author: { full_name: string | null; avatar_url: string | null } | null;
+};
+
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createSupabaseServer();
@@ -27,16 +33,17 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
   const supabase = await createSupabaseServer();
-  const { data: post } = await supabase
+  const { data: rawPost } = await supabase
     .from("blogs")
     .select("*, author:profiles(full_name, avatar_url)")
     .eq("slug", slug)
     .not("published_at", "is", null)
     .single();
 
-  if (!post) notFound();
+  if (!rawPost) notFound();
 
-  const author = post.author as { full_name: string | null; avatar_url: string | null } | null;
+  const post = rawPost as unknown as typeof rawPost & BlogPost;
+  const author = post.author;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -63,7 +70,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         )}
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Breadcrumb */}
           <nav className="text-sm text-gray-400 mb-6 flex gap-2">
             <a href="/" className="hover:text-royal-gold-600">Home</a>
             <span>/</span>
@@ -72,10 +78,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             <span className="text-gray-700 truncate">{post.title}</span>
           </nav>
 
-          {/* Tags */}
-          {(post.tags as string[]).length > 0 && (
+          {post.tags.length > 0 && (
             <div className="flex gap-2 mb-4 flex-wrap">
-              {(post.tags as string[]).map((tag) => (
+              {post.tags.map((tag) => (
                 <span key={tag} className="px-3 py-1 bg-royal-gold-100 text-royal-gold-700 text-xs font-medium rounded-full capitalize">
                   {tag}
                 </span>
@@ -85,7 +90,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
           <h1 className="font-display text-4xl font-bold text-maroon-700 mb-4 leading-tight">{post.title}</h1>
 
-          {/* Author + date */}
           <div className="flex items-center gap-3 mb-8 pb-8 border-b border-royal-gold-100">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-gold-400 to-maroon-600 flex items-center justify-center text-white font-bold text-sm">
               {author?.full_name?.[0]?.toUpperCase() || "R"}
@@ -96,7 +100,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
           </div>
 
-          {/* Body */}
           {post.body && (
             <div
               className="prose prose-lg max-w-none prose-headings:font-display prose-headings:text-maroon-700 prose-a:text-royal-gold-600 prose-strong:text-gray-900"
@@ -104,7 +107,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             />
           )}
 
-          {/* Back link */}
           <div className="mt-12 pt-8 border-t border-royal-gold-100">
             <a href="/blog" className="text-royal-gold-600 hover:text-royal-gold-800 font-medium flex items-center gap-2">
               ← Back to Blog

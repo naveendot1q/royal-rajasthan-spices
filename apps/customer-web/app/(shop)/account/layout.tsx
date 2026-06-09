@@ -2,20 +2,22 @@ import { redirect } from "next/navigation";
 import { getUser, createSupabaseServer } from "@/lib/supabase/server";
 import { AccountSidebar } from "@/components/account/account-sidebar";
 import type { Metadata } from "next";
+import type { Database } from "@rrs/database/types";
 
 export const metadata: Metadata = { title: "My Account" };
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser();
   if (!user) redirect("/login?redirect=/account");
-
+  
+  type Profile = Database["public"]["Tables"]["profiles"]["Row"];  
   const supabase = await createSupabaseServer();
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name, avatar_url, loyalty_pts")
     .eq("id", user.id)
-    .single();
-
+    .single<Profile>();
+  
   return (
     <div className="min-h-screen bg-palace-ivory">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

@@ -6,7 +6,15 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ArrowRight, Flame, TrendingUp, Star, Tag } from "lucide-react";
 
-export const revalidate = 3600; // ISR: revalidate hourly
+export const revalidate = 3600;
+
+type RawProduct = {
+  id: string; name: string; slug: string; base_price: number; compare_price: number | null;
+  avg_rating: number; review_count: number; sales_count: number; is_featured: boolean;
+  images: { url: string; is_primary: boolean }[];
+  category: { name: string } | null;
+  variants: { id: string }[];
+};
 
 async function getHomeData() {
   const supabase = await createSupabaseServer();
@@ -65,8 +73,8 @@ async function getHomeData() {
         .limit(8),
     ]);
 
-  const normalizeProducts = (items: typeof featuredResult.data) =>
-    (items || []).map((p) => ({
+  const normalizeProducts = (items: unknown) =>
+    ((items as RawProduct[]) || []).map((p) => ({
       id: p.id,
       name: p.name,
       slug: p.slug,
@@ -76,10 +84,10 @@ async function getHomeData() {
       review_count: p.review_count,
       sales_count: p.sales_count,
       is_featured: p.is_featured,
-      primary_image: (p.images as { url: string; is_primary: boolean }[])?.find((i) => i.is_primary)?.url || (p.images as { url: string }[])?.[0]?.url || null,
-      category_name: (p.category as { name: string } | null)?.name,
+      primary_image: p.images?.find((i) => i.is_primary)?.url || p.images?.[0]?.url || null,
+      category_name: p.category?.name,
       has_stock: true,
-      default_variant_id: (p.variants as { id: string }[])?.[0]?.id,
+      default_variant_id: p.variants?.[0]?.id,
     }));
 
   return {
