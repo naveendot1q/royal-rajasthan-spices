@@ -25,15 +25,24 @@ export async function getAdminUser() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Check staff role
-  const { data: role } = await supabase
+  // Step 1: get role IDs for this user
+  const { data: userRoleRows } = await supabase
     .from("user_roles")
-    .select("roles(name)")
-    .eq("user_id", user.id)
-    .single();
+    .select("role_id")
+    .eq("user_id", user.id);
 
-  const roleName = (role?.roles as { name: string } | null)?.name;
-  if (!roleName || !["super_admin", "admin", "staff"].includes(roleName)) return null;
+  const roleIds = (userRoleRows ?? []).map((r: { role_id: string }) => r.role_id);
+  if (roleIds.length === 0) return null;
 
+  // Step 2: check if any role is admin-level
+  const { data: adminRoles } = await supabase
+    .from("roles")
+    .select("name")
+    .in("id", roleIds)
+    .in("name", ["super_admin", "admin", "staff"]);
+
+  if (!adminRoles || adminRoles.length === 0) return null;
+
+  const roleName = adminRoles[0].name;
   return { ...user, role: roleName };
 }
