@@ -25,16 +25,18 @@ export default function AdminLoginPage() {
       return;
     }
 
-    // Check staff role
+    // Check staff role — fetch all roles and find an admin-level one
     const { data: rawRoleData } = await supabase
       .from("user_roles")
       .select("roles(name)")
-      .eq("user_id", data.user.id)
-      .single();
+      .eq("user_id", data.user.id);
 
     type RoleData = { roles: { name: string } | null };
-    const roleData = rawRoleData as unknown as RoleData | null;
-    const roleName = roleData?.roles?.name;
+    const allRoles = (rawRoleData as unknown as RoleData[] | null) ?? [];
+    const adminRoles = ["super_admin", "admin", "staff"];
+    const roleName = allRoles
+      .map(r => r.roles?.name)
+      .find(name => name && adminRoles.includes(name));
     if (!roleName || !["super_admin", "admin", "staff"].includes(roleName)) {
       await supabase.auth.signOut();
       toast.error("You don't have access to the admin panel");
