@@ -26,13 +26,15 @@ export default function AdminLoginPage() {
     }
 
     // Check staff role
-    const { data: roleData } = await supabase
+    const { data: rawRoleData } = await supabase
       .from("user_roles")
       .select("roles(name)")
       .eq("user_id", data.user.id)
       .single();
 
-    const roleName = (roleData?.roles as { name: string } | null)?.name;
+    type RoleData = { roles: { name: string } | null };
+    const roleData = rawRoleData as unknown as RoleData | null;
+    const roleName = roleData?.roles?.name;
     if (!roleName || !["super_admin", "admin", "staff"].includes(roleName)) {
       await supabase.auth.signOut();
       toast.error("You don't have access to the admin panel");
