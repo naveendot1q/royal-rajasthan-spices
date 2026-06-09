@@ -8,8 +8,15 @@
     ".": "./src/client.ts",
     "./types": "./src/database.types.ts"
   },
+  "scripts": {
+    "seed": "dotenv -e ../../.env.local -- tsx src/seed.ts"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
     "@supabase/ssr": "^0.5.1"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^7.4.2",
+    "tsx": "^4.19.0"
   }
 }
